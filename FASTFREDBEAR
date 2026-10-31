@@ -1,4 +1,4 @@
--- Delta Executor: Splash Screen + WalkSpeed + JumpPower + Outlines + SafeZone TP
+-- Delta Executor: Multi-Game Detection + Custom Dynamic Interface Configurator
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
@@ -6,10 +6,16 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
 local DEFAULT_SPEED = 16
-local MAX_SPEED = 100000000
+local MAX_SPEED = 10000
 local DEFAULT_JUMP = 50
-local MAX_JUMP = 300
-local BACKUP_SAFEZONE_POSITION = Vector3.new(67.714, 86.916, -95.334)
+local MAX_JUMP = 150
+
+-- Multi-Game SafeZone Coordinate Registries
+local FNAF_SAFEZONE = Vector3.new(67.714, 86.916, -95.334)
+local BAB_CFRAME = CFrame.new(-547.995056, 32.9999962, 299.399841, 0, 0, 1, 1, 0, 0, 0, 1, 0)
+
+-- Determine if current execution context matches Build A Boat (PlaceId check)
+local isBuildABoat = (game.PlaceId == 537413550 or game.GameId == 197410091)
 
 -- Clean up older interface setups safely
 if CoreGui:FindFirstChild("DeltaSpeedGUI") then
@@ -25,48 +31,44 @@ local success, err = pcall(function() gui.Parent = CoreGui end)
 if not success then gui.Parent = player:WaitForChild("PlayerGui") end
 
 -- ==========================================================
--- 🖼️ SPLASH SCREEN SETUP (Matches your drawing sketch)
+-- 🖼️ SPLASH SCREEN SETUP
 -- ==========================================================
 local splashFrame = Instance.new("Frame")
 splashFrame.Size = UDim2.new(1, 0, 1, 0)
 splashFrame.Position = UDim2.new(0, 0, 0, 0)
-splashFrame.BackgroundColor3 = Color3.fromRGB(5, 10, 20) -- Dark sleek background
+splashFrame.BackgroundColor3 = Color3.fromRGB(5, 10, 20)
 splashFrame.BorderSizePixel = 0
 splashFrame.ZIndex = 10
 splashFrame.Parent = gui
 
--- Profile Picture (The Circle from your drawing)
 local profilePic = Instance.new("ImageLabel")
 profilePic.Size = UDim2.new(0, 110, 0, 110)
 profilePic.Position = UDim2.new(0.5, -55, 0.35, -55)
 profilePic.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
--- Fetching your actual Roblox Avatar Thumbnail automatically!
 profilePic.Image = "rbxthumb://type=AvatarHeadShot&id=" .. player.UserId .. "&w=150&h=150"
 profilePic.ZIndex = 11
 profilePic.Parent = splashFrame
 
 local profileCorner = Instance.new("UICorner")
-profileCorner.CornerRadius = UDim.new(1, 0) -- Perfect Circle adjustment
+profileCorner.CornerRadius = UDim.new(1, 0)
 profileCorner.Parent = profilePic
 
 local profileStroke = Instance.new("UIStroke")
-profileStroke.Color = Color3.fromRGB(0, 145, 255) -- Bright blue circle border
+profileStroke.Color = Color3.fromRGB(0, 145, 255)
 profileStroke.Thickness = 3
 profileStroke.Parent = profilePic
 
--- Hi (Name) Label
 local hiLabel = Instance.new("TextLabel")
 hiLabel.Size = UDim2.new(1, 0, 0, 40)
 hiLabel.Position = UDim2.new(0, 0, 0.52, 0)
 hiLabel.BackgroundTransparency = 1
-hiLabel.Text = "Hi, " .. player.DisplayName .. "!" -- Dynamically grabs your name
-hiLabel.TextColor3 = Color3.fromRGB(0, 145, 255) -- Matching drawn text color
+hiLabel.Text = "Hi, " .. player.DisplayName .. "!"
+hiLabel.TextColor3 = Color3.fromRGB(0, 145, 255)
 hiLabel.TextSize = 28
 hiLabel.Font = Enum.Font.GothamBold
 hiLabel.ZIndex = 11
 hiLabel.Parent = splashFrame
 
--- Welcome Back Label
 local welcomeLabel = Instance.new("TextLabel")
 welcomeLabel.Size = UDim2.new(1, 0, 0, 30)
 welcomeLabel.Position = UDim2.new(0, 0, 0.59, 0)
@@ -88,7 +90,7 @@ main.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
-main.Visible = false -- Kept hidden until splash finish animation completes
+main.Visible = false
 main.Parent = gui
 
 local corner = Instance.new("UICorner")
@@ -244,14 +246,21 @@ local espCorner = Instance.new("UICorner")
 espCorner.CornerRadius = UDim.new(0, 8)
 espCorner.Parent = espToggle
 
--- Teleport to SafeZone Button
+-- Teleport to SafeZone Button (DYNAMIC THEME RE-ADJUSTMENT)
 local tpSafeZone = Instance.new("TextButton")
 tpSafeZone.Size = UDim2.new(1, -30, 0, 40)
 tpSafeZone.Position = UDim2.new(0, 15, 0, 245)
-tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)
-tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
+
+if isBuildABoat then
+    tpSafeZone.BackgroundColor3 = Color3.fromRGB(0, 100, 180) -- Ocean Blue Theme for BAB
+    tpSafeZone.Text = "⚓ TELEPORT TO BAB SAFEZONE"
+else
+    tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)  -- Gold Theme for default games
+    tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
+end
+
 tpSafeZone.TextColor3 = Color3.new(1, 1, 1)
-tpSafeZone.TextSize = 13
+tpSafeZone.TextSize = 12
 tpSafeZone.Font = Enum.Font.GothamBold
 tpSafeZone.Parent = main
 
@@ -264,7 +273,7 @@ local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1, -20, 0, 40)
 status.Position = UDim2.new(0, 10, 0, 295)
 status.BackgroundTransparency = 1
-status.Text = "Speed: 16 | Jump: 50\nUI Connected Successfully"
+status.Text = "Speed: 16 | Jump: 50\nGame Detection Initialized..."
 status.TextColor3 = Color3.fromRGB(130, 200, 255)
 status.TextSize = 12
 status.Font = Enum.Font.Gotham
@@ -287,10 +296,10 @@ end
 
 -- Core runtime loop
 task.spawn(function()
-    while task.wait(0.1) do
-        if gui and gui.Parent then
-            updateCharacterStats()
-        else
+while task.wait(0.1) do
+if gui and gui.Parent then
+updateCharacterStats()
+else
 break
 end
 end
@@ -349,9 +358,19 @@ if not gui or not gui.Parent then break end
 scanWorld()
 end
 end)
-local function teleportToSafeZone()
+-- DYNAMIC GAME TELEPORT ROUTER
+local function teleportExecution()
 local character = player.Character
-local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+if not character then return end
+if isBuildABoat then
+-- 🚢 Build A Boat Custom Teleport Logic Execution Block
+if character:FindFirstChild("HumanoidRootPart") then
+character:PivotTo(BAB_CFRAME)
+status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n⚓ Anchored to BAB SafeZone CFrame!"
+end
+else
+-- 🛡️ Default/FNAF Game Teleport Loop Execution Block
+local rootPart = character:FindFirstChild("HumanoidRootPart")
 if not rootPart then return end
 local safeZonesFolder = Workspace:FindFirstChild("SafeZones")
 local targetObj = safeZonesFolder and safeZonesFolder:FindFirstChild("NPCBOUNDS") or Workspace:FindFirstChild("NPCBOUNDS", true)
@@ -359,26 +378,32 @@ if targetObj and targetObj:IsA("BasePart") then
 rootPart.CFrame = targetObj.CFrame + Vector3.new(0, 5, 0)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🎯 Teleported to Map Object!"
 else
-rootPart.CFrame = CFrame.new(BACKUP_SAFEZONE_POSITION) + Vector3.new(0, 5, 0)
+rootPart.CFrame = CFrame.new(FNAF_SAFEZONE) + Vector3.new(0, 5, 0)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🌐 Map Unloaded! Used Position Cords."
 end
 end
+end
 -- ==========================================================
--- 🎬 ANIMATION CONTROLLER (Fades splash out, brings main in)
+-- 🎬 ANIMATION CONTROLLER
 -- ==========================================================
 task.spawn(function()
-task.wait(4.5) -- Hold splash graphic visible for 2.5 seconds
+task.wait(2.5) -- Adjust this number to make the black splash display longer!
 local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
--- Fade out all components of splash window
 local f1 = TweenService:Create(splashFrame, tweenInfo, {BackgroundTransparency = 1})
 local f2 = TweenService:Create(profilePic, tweenInfo, {ImageTransparency = 1})
 local f3 = TweenService:Create(profileStroke, tweenInfo, {Transparency = 1})
 local f4 = TweenService:Create(hiLabel, tweenInfo, {TextTransparency = 1})
 local f5 = TweenService:Create(welcomeLabel, tweenInfo, {TextTransparency = 1})
 f1:Play() f2:Play() f3:Play() f4:Play() f5:Play()
-f1.Completed:Wait() -- Wait for fade to finish completely
-splashFrame:Destroy() -- Delete splash elements cleanly
-main.Visible = true -- Flash control panel on screen
+f1.Completed:Wait()
+splashFrame:Destroy()
+main.Visible = true
+-- Display target game in panel log status
+if isBuildABoat then
+status.Text = "Speed: 16 | Jump: 50\nDetected: Build A Boat for Treasure"
+else
+status.Text = "Speed: 16 | Jump: 50\nDetected: Default Game Environment"
+end
 scanWorld()
 end)
 -- Button Interaction Hook Connections
@@ -425,7 +450,7 @@ cleanHighlights()
 end
 end)
 tpSafeZone.Activated:Connect(function()
-teleportToSafeZone()
+teleportExecution()
 end)
 closeButton.Activated:Connect(function()
 main.Visible = false
