@@ -1,4 +1,4 @@
--- Delta Multi-Game Setup: Run From Fast Fredbear & Build A Boat for Treasure
+-- Delta Executor: Fixed Player Selection Drop-down List + TP + Stats + ESP
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
@@ -15,7 +15,7 @@ local MAX_JUMP = 150
 local FNAF_FREDBEAR_SAFEZONE = Vector3.new(67.714, 86.916, -95.334)
 local BAB_CFRAME = CFrame.new(-547.995056, 32.9999962, 299.399841, 0, 0, 1, 1, 0, 0, 0, 1, 0)
 
--- Multi-Game Robust String Name Detector Engine
+-- Multi-Game Detector
 local gameName = "Default"
 pcall(function()
     local productInfo = MarketPlace:GetProductInfo(game.PlaceId)
@@ -87,14 +87,14 @@ welcomeLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
 welcomeLabel.TextSize = 20
 welcomeLabel.Font = Enum.Font.GothamMedium
 welcomeLabel.ZIndex = 11
-welcomeLabel.Parent = splashFrame
+welcomeLabel.Parent = welcomeLabel.Parent and splashFrame or splashFrame
 
 -- ==========================================================
 -- ⚡ MAIN CONTROL PANEL SETUP
 -- ==========================================================
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 280, 0, 380)
-main.Position = UDim2.new(0.5, -140, 0.5, -190)
+main.Size = UDim2.new(0, 280, 0, 455)
+main.Position = UDim2.new(0.5, -140, 0.5, -227)
 main.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
 main.BorderSizePixel = 0
 main.Active = true
@@ -126,7 +126,7 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = title
 
--- Minimization Controls
+-- Minimization Buttons
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 30, 0, 30)
 closeButton.Position = UDim2.new(1, -38, 0, 7)
@@ -225,75 +225,126 @@ local applyJumpCorner = Instance.new("UICorner")
 applyJumpCorner.CornerRadius = UDim.new(0, 8)
 applyJumpCorner.Parent = applyJump
 
--- Universal Reset Button
+-- ==========================================================
+-- 👤 TARGET PLAYER SELECTOR SYSTEM (With Auto-Layout Refresher)
+-- ==========================================================
+local targetDropdown = Instance.new("TextButton")
+targetDropdown.Size = UDim2.new(1, -30, 0, 38)
+targetDropdown.Position = UDim2.new(0, 15, 0, 150)
+targetDropdown.BackgroundColor3 = Color3.fromRGB(28, 45, 75)
+targetDropdown.Text = "Select Target Player..."
+targetDropdown.TextColor3 = Color3.fromRGB(160, 180, 210)
+targetDropdown.TextSize = 13
+targetDropdown.Font = Enum.Font.GothamMedium
+targetDropdown.ZIndex = 6
+targetDropdown.Parent = main
+
+local ddCorner = Instance.new("UICorner")
+ddCorner.CornerRadius = UDim.new(0, 8)
+ddCorner.Parent = targetDropdown
+
+local ddStroke = Instance.new("UIStroke")
+ddStroke.Color = Color3.fromRGB(0, 145, 255)
+ddStroke.Thickness = 1
+ddStroke.Parent = targetDropdown
+
+-- Dropdown Scrolling Area List container
+local listScroll = Instance.new("ScrollingFrame")
+listScroll.Size = UDim2.new(1, -30, 0, 120)
+listScroll.Position = UDim2.new(0, 15, 0, 188)
+listScroll.BackgroundColor3 = Color3.fromRGB(20, 32, 55)
+listScroll.BorderSizePixel = 0
+listScroll.Visible = false
+listScroll.ZIndex = 7
+listScroll.ScrollBarThickness = 5
+listScroll.Parent = main
+
+local scrollCorner = Instance.new("UICorner")
+scrollCorner.CornerRadius = UDim.new(0, 8)
+scrollCorner.Parent = listScroll
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 3)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Parent = listScroll
+
+-- Teleport to Player Action Button
+local tpPlayerBtn = Instance.new("TextButton")
+tpPlayerBtn.Size = UDim2.new(1, -30, 0, 38)
+tpPlayerBtn.Position = UDim2.new(0, 15, 0, 195)
+tpPlayerBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
+tpPlayerBtn.Text = "👤 TELEPORT TO PLAYER"
+tpPlayerBtn.TextColor3 = Color3.new(1, 1, 1)
+tpPlayerBtn.TextSize = 13
+tpPlayerBtn.Font = Enum.Font.GothamBold
+tpPlayerBtn.ZIndex = 6
+tpPlayerBtn.Parent = main
+
+local tpPConer = Instance.new("UICorner")
+tpPConer.CornerRadius = UDim.new(0, 8)
+tpPConer.Parent = tpPlayerBtn
+
+-- ==========================================================
+-- ⚙️ REMAINDER COMPONENT ADJUSTMENTS (Pushed Downward)
+-- ==========================================================
 local resetAll = Instance.new("TextButton")
 resetAll.Size = UDim2.new(1, -30, 0, 35)
-resetAll.Position = UDim2.new(0, 15, 0, 150)
+resetAll.Position = UDim2.new(0, 15, 0, 240)
 resetAll.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 resetAll.Text = "Reset All Stats"
 resetAll.TextColor3 = Color3.new(1, 1, 1)
 resetAll.TextSize = 14
 resetAll.Font = Enum.Font.GothamBold
 resetAll.Parent = main
-
 local resetAllCorner = Instance.new("UICorner")
 resetAllCorner.CornerRadius = UDim.new(0, 8)
 resetAllCorner.Parent = resetAll
-
--- ESP Toggle Button
 local espToggle = Instance.new("TextButton")
 espToggle.Size = UDim2.new(1, -30, 0, 40)
-espToggle.Position = UDim2.new(0, 15, 0, 195)
+espToggle.Position = UDim2.new(0, 15, 0, 282)
 espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40)
 espToggle.Text = "ESP OUTLINES: ON"
 espToggle.TextColor3 = Color3.new(1, 1, 1)
 espToggle.TextSize = 14
 espToggle.Font = Enum.Font.GothamBold
 espToggle.Parent = main
-
 local espCorner = Instance.new("UICorner")
 espCorner.CornerRadius = UDim.new(0, 8)
 espCorner.Parent = espToggle
-
--- Teleport to SafeZone Button (Dynamically Toggled)
 local tpSafeZone = Instance.new("TextButton")
 tpSafeZone.Size = UDim2.new(1, -30, 0, 40)
-tpSafeZone.Position = UDim2.new(0, 15, 0, 245)
-
+tpSafeZone.Position = UDim2.new(0, 15, 0, 329)
 if isBuildABoat then
-    tpSafeZone.BackgroundColor3 = Color3.fromRGB(0, 100, 180)
-    tpSafeZone.Text = "⚓ TELEPORT TO BAB SAFEZONE"
+tpSafeZone.BackgroundColor3 = Color3.fromRGB(0, 100, 180)
+tpSafeZone.Text = "⚓ TELEPORT TO BAB SAFEZONE"
 elseif isFastFredbear then
-    tpSafeZone.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Dark red themed for horror game
-    tpSafeZone.Text = "🐻 TELEPORT TO FREDBEAR SAFEZONE"
+tpSafeZone.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+tpSafeZone.Text = "🐻 TELEPORT TO SAFEZONE"
 else
-    tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)
-    tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
+tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)
+tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
 end
-
 tpSafeZone.TextColor3 = Color3.new(1, 1, 1)
 tpSafeZone.TextSize = 12
 tpSafeZone.Font = Enum.Font.GothamBold
 tpSafeZone.Parent = main
-
 local tpCorner = Instance.new("UICorner")
 tpCorner.CornerRadius = UDim.new(0, 8)
 tpCorner.Parent = tpSafeZone
-
--- Dynamic Status Indicator
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1, -20, 0, 40)
-status.Position = UDim2.new(0, 10, 0, 295)
+status.Position = UDim2.new(0, 10, 0, 375)
 status.BackgroundTransparency = 1
 status.TextColor3 = Color3.fromRGB(130, 200, 255)
 status.TextSize = 12
 status.Font = Enum.Font.Gotham
 status.Parent = main
-
 -- Runtime State Variables
 local selectedSpeed = DEFAULT_SPEED
 local selectedJump = DEFAULT_JUMP
 local espActive = true
+local selectedTargetPlayer = nil
+local dropdownOpen = false
 local function updateCharacterStats()
 local character = player.Character
 local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -303,14 +354,9 @@ humanoid.UseJumpPower = true
 humanoid.JumpPower = selectedJump
 end
 end
--- Core runtime speed loop
 task.spawn(function()
 while task.wait(0.1) do
-if gui and gui.Parent then
-updateCharacterStats()
-else
-break
-end
+if gui and gui.Parent then updateCharacterStats() else break end
 end
 end)
 -- ESP Engine
@@ -345,10 +391,7 @@ end
 end
 end
 local function scanWorld()
-if not espActive then
-cleanHighlights()
-return
-end
+if not espActive then cleanHighlights() return end
 for _, p in ipairs(Players:GetPlayers()) do
 if p ~= player and p.Character then
 createHighlight(p.Character, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255))
@@ -367,15 +410,67 @@ if not gui or not gui.Parent then break end
 scanWorld()
 end
 end)
--- Dynamic Multi-Game Teleport Logic Router
-local function teleportExecution()
+-- BULLETPROOF LIST REBUILD ENGINE
+local function updateDropdownList()
+-- Clear out old listing instances safely
+for _, child in ipairs(listScroll:GetChildren()) do
+if child:IsA("TextButton") then child:Destroy() end
+end
+local indexCount = 0
+for _, p in ipairs(Players:GetPlayers()) do
+if p ~= player then
+indexCount = indexCount + 1
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1, -10, 0, 30) -- Left side room for scroll bar bounds
+btn.BackgroundColor3 = Color3.fromRGB(35, 55, 90)
+btn.BorderSizePixel = 0
+btn.Text = " " .. p.DisplayName .. " (@" .. p.Name .. ")"
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.TextSize = 12
+btn.TextXAlignment = Enum.TextXAlignment.Left
+btn.Font = Enum.Font.GothamSemibold
+btn.ZIndex = 8
+btn.Parent = listScroll
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 6)
+btnCorner.Parent = btn
+btn.Activated:Connect(function()
+selectedTargetPlayer = p
+targetDropdown.Text = "🎯 Target: " .. p.DisplayName
+targetDropdown.TextColor3 = Color3.new(1, 1, 1)
+-- Auto-Close Sequence
+dropdownOpen = false
+listScroll.Visible = false
+tpPlayerBtn.Position = UDim2.new(0, 15, 0, 195)
+main.Size = UDim2.new(0, 280, 0, 455)
+end)
+end
+end
+-- Absolute Canvas Resize Safeguard
+listScroll.CanvasSize = UDim2.new(0, 0, 0, indexCount * 33)
+if indexCount == 0 then
+targetDropdown.Text = "No other players in server!"
+end
+end
+local function toggleDropdown()
+dropdownOpen = not dropdownOpen
+if dropdownOpen then
+updateDropdownList()
+listScroll.Visible = true
+tpPlayerBtn.Position = UDim2.new(0, 15, 0, 315)
+main.Size = UDim2.new(0, 280, 0, 575)
+else
+listScroll.Visible = false
+tpPlayerBtn.Position = UDim2.new(0, 15, 0, 195)
+main.Size = UDim2.new(0, 280, 0, 455)
+end
+end
+-- Teleport Systems
+local function teleportToSafeZone()
 local character = player.Character
 if not character then return end
 if isBuildABoat then
-if character:FindFirstChild("HumanoidRootPart") then
-character:PivotTo(BAB_CFRAME)
-status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n⚓ Anchored to BAB SafeZone CFrame!"
-end
+if character:FindFirstChild("HumanoidRootPart") then character:PivotTo(BAB_CFRAME) end
 elseif isFastFredbear then
 local rootPart = character:FindFirstChild("HumanoidRootPart")
 if not rootPart then return end
@@ -383,15 +478,23 @@ local safeZonesFolder = Workspace:FindFirstChild("SafeZones")
 local targetObj = safeZonesFolder and safeZonesFolder:FindFirstChild("NPCBOUNDS") or Workspace:FindFirstChild("NPCBOUNDS", true)
 if targetObj and targetObj:IsA("BasePart") then
 rootPart.CFrame = targetObj.CFrame + Vector3.new(0, 5, 0)
-status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🎯 Teleported to Map Object!"
 else
 rootPart.CFrame = CFrame.new(FNAF_FREDBEAR_SAFEZONE) + Vector3.new(0, 5, 0)
-status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🌐 Map Unloaded! Used Position Cords."
 end
+end
+end
+local function teleportToSelectedPlayer()
+if not selectedTargetPlayer or not selectedTargetPlayer.Character then
+status.Text = "Error: Select a valid player target first!"
+return
+end
+local targetRoot = selectedTargetPlayer.Character:FindFirstChild("HumanoidRootPart")
+local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+if myRoot and targetRoot then
+myRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 3, 0)
+status.Text = "Teleported to " .. selectedTargetPlayer.DisplayName .. "!"
 else
--- Fallback default teleport
-local rootPart = character:FindFirstChild("HumanoidRootPart")
-if rootPart then rootPart.CFrame = CFrame.new(0, 50, 0) end
+status.Text = "Target player has no spawned body!"
 end
 end
 -- ==========================================================
@@ -409,45 +512,34 @@ f1:Play() f2:Play() f3:Play() f4:Play() f5:Play()
 f1.Completed:Wait()
 splashFrame:Destroy()
 main.Visible = true
-if isBuildABoat then
-status.Text = "Speed: 16 | Jump: 50\nLoaded: Build A Boat Mode"
-elseif isFastFredbear then
-status.Text = "Speed: 16 | Jump: 50\nLoaded: Run From Fast Fredbear Mode"
-else
-status.Text = "Speed: 16 | Jump: 50\nLoaded: Universal Base Module"
-end
+status.Text = "System Synced. Engine online!"
 scanWorld()
 end)
--- Event Hook Connections
+-- Button Event Binding Assignments
+targetDropdown.Activated:Connect(toggleDropdown)
+tpPlayerBtn.Activated:Connect(teleportToSelectedPlayer)
 applySpeed.Activated:Connect(function()
 local speedVal = tonumber(speedBox.Text)
 if speedVal and speedVal == speedVal and speedVal ~= math.huge and speedVal ~= -math.huge then
 selectedSpeed = math.clamp(math.floor(speedVal), 1, MAX_SPEED)
 speedBox.Text = tostring(selectedSpeed)
-status.Text = "Speed: " .. selectedSpeed .. " | Jump: " .. selectedJump .. "\nWalkSpeed updated successfully!"
-else
-status.Text = "Enter a valid number for Speed!"
 end
-updateCharacterStats()
 end)
 applyJump.Activated:Connect(function()
 local jumpVal = tonumber(jumpBox.Text)
 if jumpVal and jumpVal == jumpVal and jumpVal ~= math.huge and jumpVal ~= -math.huge then
 selectedJump = math.clamp(math.floor(jumpVal), 0, MAX_JUMP)
 jumpBox.Text = tostring(selectedJump)
-status.Text = "Speed: " .. selectedSpeed .. " | Jump: " .. selectedJump .. "\nJumpPower updated successfully!"
-else
-status.Text = "Enter a valid number for Jump!"
 end
-updateCharacterStats()
 end)
 resetAll.Activated:Connect(function()
 selectedSpeed = DEFAULT_SPEED
 selectedJump = DEFAULT_JUMP
 speedBox.Text = tostring(DEFAULT_SPEED)
 jumpBox.Text = tostring(DEFAULT_JUMP)
-updateCharacterStats()
-status.Text = "Speed: 16 | Jump: 50\nAll stats reset to defaults."
+targetDropdown.Text = "Select Target Player..."
+targetDropdown.TextColor3 = Color3.fromRGB(160, 180, 210)
+selectedTargetPlayer = nil
 end)
 espToggle.Activated:Connect(function()
 espActive = not espActive
@@ -461,9 +553,7 @@ espToggle.Text = "ESP OUTLINES: OFF"
 cleanHighlights()
 end
 end)
-tpSafeZone.Activated:Connect(function()
-teleportExecution()
-end)
+tpSafeZone.Activated:Connect(teleportToSafeZone)
 closeButton.Activated:Connect(function()
 main.Visible = false
 openButton.Visible = true
