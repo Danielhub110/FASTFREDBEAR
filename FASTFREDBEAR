@@ -1,8 +1,9 @@
--- Delta Executor: Multi-Game Detection + Custom Dynamic Interface Configurator
+-- Delta Multi-Game Setup: Run From Fast Fredbear & Build A Boat for Treasure
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
+local MarketPlace = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
 local DEFAULT_SPEED = 16
@@ -10,12 +11,21 @@ local MAX_SPEED = 10000
 local DEFAULT_JUMP = 50
 local MAX_JUMP = 150
 
--- Multi-Game SafeZone Coordinate Registries
-local FNAF_SAFEZONE = Vector3.new(67.714, 86.916, -95.334)
+-- Coordinates Registries
+local FNAF_FREDBEAR_SAFEZONE = Vector3.new(67.714, 86.916, -95.334)
 local BAB_CFRAME = CFrame.new(-547.995056, 32.9999962, 299.399841, 0, 0, 1, 1, 0, 0, 0, 1, 0)
 
--- Determine if current execution context matches Build A Boat (PlaceId check)
-local isBuildABoat = (game.PlaceId == 537413550 or game.GameId == 197410091)
+-- Multi-Game Robust String Name Detector Engine
+local gameName = "Default"
+pcall(function()
+    local productInfo = MarketPlace:GetProductInfo(game.PlaceId)
+    if productInfo and productInfo.Name then
+        gameName = productInfo.Name
+    end
+end)
+
+local isBuildABoat = string.find(string.lower(gameName), "boat") or game.PlaceId == 537413550
+local isFastFredbear = string.find(string.lower(gameName), "fredbear") or game.PlaceId == 107734853434823
 
 -- Clean up older interface setups safely
 if CoreGui:FindFirstChild("DeltaSpeedGUI") then
@@ -35,7 +45,6 @@ if not success then gui.Parent = player:WaitForChild("PlayerGui") end
 -- ==========================================================
 local splashFrame = Instance.new("Frame")
 splashFrame.Size = UDim2.new(1, 0, 1, 0)
-splashFrame.Position = UDim2.new(0, 0, 0, 0)
 splashFrame.BackgroundColor3 = Color3.fromRGB(5, 10, 20)
 splashFrame.BorderSizePixel = 0
 splashFrame.ZIndex = 10
@@ -246,16 +255,19 @@ local espCorner = Instance.new("UICorner")
 espCorner.CornerRadius = UDim.new(0, 8)
 espCorner.Parent = espToggle
 
--- Teleport to SafeZone Button (DYNAMIC THEME RE-ADJUSTMENT)
+-- Teleport to SafeZone Button (Dynamically Toggled)
 local tpSafeZone = Instance.new("TextButton")
 tpSafeZone.Size = UDim2.new(1, -30, 0, 40)
 tpSafeZone.Position = UDim2.new(0, 15, 0, 245)
 
 if isBuildABoat then
-    tpSafeZone.BackgroundColor3 = Color3.fromRGB(0, 100, 180) -- Ocean Blue Theme for BAB
+    tpSafeZone.BackgroundColor3 = Color3.fromRGB(0, 100, 180)
     tpSafeZone.Text = "⚓ TELEPORT TO BAB SAFEZONE"
+elseif isFastFredbear then
+    tpSafeZone.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Dark red themed for horror game
+    tpSafeZone.Text = "🐻 TELEPORT TO FREDBEAR SAFEZONE"
 else
-    tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)  -- Gold Theme for default games
+    tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)
     tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
 end
 
@@ -273,7 +285,6 @@ local status = Instance.new("TextLabel")
 status.Size = UDim2.new(1, -20, 0, 40)
 status.Position = UDim2.new(0, 10, 0, 295)
 status.BackgroundTransparency = 1
-status.Text = "Speed: 16 | Jump: 50\nGame Detection Initialized..."
 status.TextColor3 = Color3.fromRGB(130, 200, 255)
 status.TextSize = 12
 status.Font = Enum.Font.Gotham
@@ -283,18 +294,16 @@ status.Parent = main
 local selectedSpeed = DEFAULT_SPEED
 local selectedJump = DEFAULT_JUMP
 local espActive = true
-
 local function updateCharacterStats()
-    local character = player.Character
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = selectedSpeed
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = selectedJump
-    end
+local character = player.Character
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+if humanoid then
+humanoid.WalkSpeed = selectedSpeed
+humanoid.UseJumpPower = true
+humanoid.JumpPower = selectedJump
 end
-
--- Core runtime loop
+end
+-- Core runtime speed loop
 task.spawn(function()
 while task.wait(0.1) do
 if gui and gui.Parent then
@@ -358,18 +367,16 @@ if not gui or not gui.Parent then break end
 scanWorld()
 end
 end)
--- DYNAMIC GAME TELEPORT ROUTER
+-- Dynamic Multi-Game Teleport Logic Router
 local function teleportExecution()
 local character = player.Character
 if not character then return end
 if isBuildABoat then
--- 🚢 Build A Boat Custom Teleport Logic Execution Block
 if character:FindFirstChild("HumanoidRootPart") then
 character:PivotTo(BAB_CFRAME)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n⚓ Anchored to BAB SafeZone CFrame!"
 end
-else
--- 🛡️ Default/FNAF Game Teleport Loop Execution Block
+elseif isFastFredbear then
 local rootPart = character:FindFirstChild("HumanoidRootPart")
 if not rootPart then return end
 local safeZonesFolder = Workspace:FindFirstChild("SafeZones")
@@ -378,16 +385,20 @@ if targetObj and targetObj:IsA("BasePart") then
 rootPart.CFrame = targetObj.CFrame + Vector3.new(0, 5, 0)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🎯 Teleported to Map Object!"
 else
-rootPart.CFrame = CFrame.new(FNAF_SAFEZONE) + Vector3.new(0, 5, 0)
+rootPart.CFrame = CFrame.new(FNAF_FREDBEAR_SAFEZONE) + Vector3.new(0, 5, 0)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🌐 Map Unloaded! Used Position Cords."
 end
+else
+-- Fallback default teleport
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+if rootPart then rootPart.CFrame = CFrame.new(0, 50, 0) end
 end
 end
 -- ==========================================================
 -- 🎬 ANIMATION CONTROLLER
 -- ==========================================================
 task.spawn(function()
-task.wait(2.5) -- Adjust this number to make the black splash display longer!
+task.wait(2.5)
 local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local f1 = TweenService:Create(splashFrame, tweenInfo, {BackgroundTransparency = 1})
 local f2 = TweenService:Create(profilePic, tweenInfo, {ImageTransparency = 1})
@@ -398,15 +409,16 @@ f1:Play() f2:Play() f3:Play() f4:Play() f5:Play()
 f1.Completed:Wait()
 splashFrame:Destroy()
 main.Visible = true
--- Display target game in panel log status
 if isBuildABoat then
-status.Text = "Speed: 16 | Jump: 50\nDetected: Build A Boat for Treasure"
+status.Text = "Speed: 16 | Jump: 50\nLoaded: Build A Boat Mode"
+elseif isFastFredbear then
+status.Text = "Speed: 16 | Jump: 50\nLoaded: Run From Fast Fredbear Mode"
 else
-status.Text = "Speed: 16 | Jump: 50\nDetected: Default Game Environment"
+status.Text = "Speed: 16 | Jump: 50\nLoaded: Universal Base Module"
 end
 scanWorld()
 end)
--- Button Interaction Hook Connections
+-- Event Hook Connections
 applySpeed.Activated:Connect(function()
 local speedVal = tonumber(speedBox.Text)
 if speedVal and speedVal == speedVal and speedVal ~= math.huge and speedVal ~= -math.huge then
