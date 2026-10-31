@@ -1,13 +1,14 @@
--- Delta Executor: Separated WalkSpeed + JumpPower Controls + ESP + SafeZone TP
+-- Delta Executor: Splash Screen + WalkSpeed + JumpPower + Outlines + SafeZone TP
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
 local DEFAULT_SPEED = 16
-local MAX_SPEED = 10000
+local MAX_SPEED = 100000000
 local DEFAULT_JUMP = 50
-local MAX_JUMP = 150
+local MAX_JUMP = 300
 local BACKUP_SAFEZONE_POSITION = Vector3.new(67.714, 86.916, -95.334)
 
 -- Clean up older interface setups safely
@@ -23,7 +24,63 @@ gui.ResetOnSpawn = false
 local success, err = pcall(function() gui.Parent = CoreGui end)
 if not success then gui.Parent = player:WaitForChild("PlayerGui") end
 
--- Main Window Configuration (Resized to fit both separated sections perfectly)
+-- ==========================================================
+-- 🖼️ SPLASH SCREEN SETUP (Matches your drawing sketch)
+-- ==========================================================
+local splashFrame = Instance.new("Frame")
+splashFrame.Size = UDim2.new(1, 0, 1, 0)
+splashFrame.Position = UDim2.new(0, 0, 0, 0)
+splashFrame.BackgroundColor3 = Color3.fromRGB(5, 10, 20) -- Dark sleek background
+splashFrame.BorderSizePixel = 0
+splashFrame.ZIndex = 10
+splashFrame.Parent = gui
+
+-- Profile Picture (The Circle from your drawing)
+local profilePic = Instance.new("ImageLabel")
+profilePic.Size = UDim2.new(0, 110, 0, 110)
+profilePic.Position = UDim2.new(0.5, -55, 0.35, -55)
+profilePic.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
+-- Fetching your actual Roblox Avatar Thumbnail automatically!
+profilePic.Image = "rbxthumb://type=AvatarHeadShot&id=" .. player.UserId .. "&w=150&h=150"
+profilePic.ZIndex = 11
+profilePic.Parent = splashFrame
+
+local profileCorner = Instance.new("UICorner")
+profileCorner.CornerRadius = UDim.new(1, 0) -- Perfect Circle adjustment
+profileCorner.Parent = profilePic
+
+local profileStroke = Instance.new("UIStroke")
+profileStroke.Color = Color3.fromRGB(0, 145, 255) -- Bright blue circle border
+profileStroke.Thickness = 3
+profileStroke.Parent = profilePic
+
+-- Hi (Name) Label
+local hiLabel = Instance.new("TextLabel")
+hiLabel.Size = UDim2.new(1, 0, 0, 40)
+hiLabel.Position = UDim2.new(0, 0, 0.52, 0)
+hiLabel.BackgroundTransparency = 1
+hiLabel.Text = "Hi, " .. player.DisplayName .. "!" -- Dynamically grabs your name
+hiLabel.TextColor3 = Color3.fromRGB(0, 145, 255) -- Matching drawn text color
+hiLabel.TextSize = 28
+hiLabel.Font = Enum.Font.GothamBold
+hiLabel.ZIndex = 11
+hiLabel.Parent = splashFrame
+
+-- Welcome Back Label
+local welcomeLabel = Instance.new("TextLabel")
+welcomeLabel.Size = UDim2.new(1, 0, 0, 30)
+welcomeLabel.Position = UDim2.new(0, 0, 0.59, 0)
+welcomeLabel.BackgroundTransparency = 1
+welcomeLabel.Text = "welcome back"
+welcomeLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
+welcomeLabel.TextSize = 20
+welcomeLabel.Font = Enum.Font.GothamMedium
+welcomeLabel.ZIndex = 11
+welcomeLabel.Parent = splashFrame
+
+-- ==========================================================
+-- ⚡ MAIN CONTROL PANEL SETUP
+-- ==========================================================
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0, 280, 0, 380)
 main.Position = UDim2.new(0.5, -140, 0.5, -190)
@@ -31,7 +88,7 @@ main.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
-main.Visible = true
+main.Visible = false -- Kept hidden until splash finish animation completes
 main.Parent = gui
 
 local corner = Instance.new("UICorner")
@@ -125,7 +182,7 @@ local applySpeedCorner = Instance.new("UICorner")
 applySpeedCorner.CornerRadius = UDim.new(0, 8)
 applySpeedCorner.Parent = applySpeed
 
--- SECTION 2: JumpPower Input & Button (Placed right below WalkSpeed)
+-- SECTION 2: JumpPower Input & Button
 local jumpBox = Instance.new("TextBox")
 jumpBox.Size = UDim2.new(0.55, -15, 0, 35)
 jumpBox.Position = UDim2.new(0, 15, 0, 105)
@@ -213,7 +270,7 @@ status.TextSize = 12
 status.Font = Enum.Font.Gotham
 status.Parent = main
 
--- Runtime State Management Variables
+-- Runtime State Variables
 local selectedSpeed = DEFAULT_SPEED
 local selectedJump = DEFAULT_JUMP
 local espActive = true
@@ -228,81 +285,74 @@ local function updateCharacterStats()
     end
 end
 
--- Core runtime enforcement loop (Prevents anti-cheat resetting stats)
+-- Core runtime loop
 task.spawn(function()
     while task.wait(0.1) do
         if gui and gui.Parent then
             updateCharacterStats()
         else
-            break
-        end
-    end
+break
+end
+end
 end)
-
--- Core Outline Highlight Engine
+-- ESP Engine
 local function createHighlight(model, fill, outline)
-    if not model:IsA("Model") or model == player.Character then return end
-    local highlight = model:FindFirstChild("DeltaOutlineESP")
-    if not highlight then
-        highlight = Instance.new("Highlight")
-        highlight.Name = "DeltaOutlineESP"
-        highlight.FillColor = fill
-        highlight.FillTransparency = 0.55
-        highlight.OutlineColor = outline
-        highlight.OutlineTransparency = 0
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Parent = model
-    end
-    highlight.Enabled = espActive
+if not model:IsA("Model") or model == player.Character then return end
+local highlight = model:FindFirstChild("DeltaOutlineESP")
+if not highlight then
+highlight = Instance.new("Highlight")
+highlight.Name = "DeltaOutlineESP"
+highlight.FillColor = fill
+highlight.FillTransparency = 0.55
+highlight.OutlineColor = outline
+highlight.OutlineTransparency = 0
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Parent = model
 end
-
+highlight.Enabled = espActive
+end
 local function cleanHighlights()
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p.Character and p.Character:FindFirstChild("DeltaOutlineESP") then
-            p.Character.DeltaOutlineESP.Enabled = false
-        end
-    end
-    local enemiesFolder = Workspace:FindFirstChild("Enemies")
-    if enemiesFolder then
-        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-            if enemy:FindFirstChild("DeltaOutlineESP") then
-                enemy.DeltaOutlineESP.Enabled = false
-            end
-        end
-    end
+for _, p in ipairs(Players:GetPlayers()) do
+if p.Character and p.Character:FindFirstChild("DeltaOutlineESP") then
+p.Character.DeltaOutlineESP.Enabled = false
 end
-
+end
+local enemiesFolder = Workspace:FindFirstChild("Enemies")
+if enemiesFolder then
+for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+if enemy:FindFirstChild("DeltaOutlineESP") then
+enemy.DeltaOutlineESP.Enabled = false
+end
+end
+end
+end
 local function scanWorld()
-    if not espActive then 
-        cleanHighlights()
-        return 
-    end
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= player and p.Character then
-            createHighlight(p.Character, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255))
-        end
-    end
-    local enemiesFolder = Workspace:FindFirstChild("Enemies")
-    if enemiesFolder then
-        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-            createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30))
-        end
-    end
+if not espActive then
+cleanHighlights()
+return
 end
-
+for _, p in ipairs(Players:GetPlayers()) do
+if p ~= player and p.Character then
+createHighlight(p.Character, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255))
+end
+end
+local enemiesFolder = Workspace:FindFirstChild("Enemies")
+if enemiesFolder then
+for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30))
+end
+end
+end
 task.spawn(function()
-    while task.wait(1.5) do
-        if not gui or not gui.Parent then break end
-        scanWorld()
-    end
+while task.wait(1.5) do
+if not gui or not gui.Parent then break end
+scanWorld()
+end
 end)
-
--- Multi-Layer Smart Teleport Execution
 local function teleportToSafeZone()
-    local character = player.Character
-    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
-
+local character = player.Character
+local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+if not rootPart then return end
 local safeZonesFolder = Workspace:FindFirstChild("SafeZones")
 local targetObj = safeZonesFolder and safeZonesFolder:FindFirstChild("NPCBOUNDS") or Workspace:FindFirstChild("NPCBOUNDS", true)
 if targetObj and targetObj:IsA("BasePart") then
@@ -313,7 +363,25 @@ rootPart.CFrame = CFrame.new(BACKUP_SAFEZONE_POSITION) + Vector3.new(0, 5, 0)
 status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🌐 Map Unloaded! Used Position Cords."
 end
 end
--- UI Interaction Event Hooks
+-- ==========================================================
+-- 🎬 ANIMATION CONTROLLER (Fades splash out, brings main in)
+-- ==========================================================
+task.spawn(function()
+task.wait(4.5) -- Hold splash graphic visible for 2.5 seconds
+local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+-- Fade out all components of splash window
+local f1 = TweenService:Create(splashFrame, tweenInfo, {BackgroundTransparency = 1})
+local f2 = TweenService:Create(profilePic, tweenInfo, {ImageTransparency = 1})
+local f3 = TweenService:Create(profileStroke, tweenInfo, {Transparency = 1})
+local f4 = TweenService:Create(hiLabel, tweenInfo, {TextTransparency = 1})
+local f5 = TweenService:Create(welcomeLabel, tweenInfo, {TextTransparency = 1})
+f1:Play() f2:Play() f3:Play() f4:Play() f5:Play()
+f1.Completed:Wait() -- Wait for fade to finish completely
+splashFrame:Destroy() -- Delete splash elements cleanly
+main.Visible = true -- Flash control panel on screen
+scanWorld()
+end)
+-- Button Interaction Hook Connections
 applySpeed.Activated:Connect(function()
 local speedVal = tonumber(speedBox.Text)
 if speedVal and speedVal == speedVal and speedVal ~= math.huge and speedVal ~= -math.huge then
@@ -367,5 +435,3 @@ openButton.Activated:Connect(function()
 main.Visible = true
 openButton.Visible = false
 end)
--- Run initial sweep immediately upon injection
-scanWorld()
