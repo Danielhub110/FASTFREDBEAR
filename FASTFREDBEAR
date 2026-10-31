@@ -1,4 +1,4 @@
--- Delta Executor: Speed Control + Player/NPC Silhouette Outline ESP
+-- Delta Executor: Separated WalkSpeed + JumpPower Controls + ESP + SafeZone TP
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
@@ -6,6 +6,9 @@ local player = Players.LocalPlayer
 
 local DEFAULT_SPEED = 16
 local MAX_SPEED = 10000
+local DEFAULT_JUMP = 50
+local MAX_JUMP = 150
+local BACKUP_SAFEZONE_POSITION = Vector3.new(67.714, 86.916, -95.334)
 
 -- Clean up older interface setups safely
 if CoreGui:FindFirstChild("DeltaSpeedGUI") then
@@ -20,10 +23,10 @@ gui.ResetOnSpawn = false
 local success, err = pcall(function() gui.Parent = CoreGui end)
 if not success then gui.Parent = player:WaitForChild("PlayerGui") end
 
--- Main Window Configuration
+-- Main Window Configuration (Resized to fit both separated sections perfectly)
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 280, 0, 240)
-main.Position = UDim2.new(0.5, -140, 0.5, -120)
+main.Size = UDim2.new(0, 280, 0, 380)
+main.Position = UDim2.new(0.5, -140, 0.5, -190)
 main.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
 main.BorderSizePixel = 0
 main.Active = true
@@ -45,9 +48,9 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 45)
 title.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
 title.BorderSizePixel = 0
-title.Text = "ESP AND WALKSPEED YAY"
+title.Text = "⚡ CONTROL PANEL"
 title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 17
+title.TextSize = 18
 title.Font = Enum.Font.GothamBold
 title.Parent = main
 
@@ -74,9 +77,9 @@ local openButton = Instance.new("TextButton")
 openButton.Size = UDim2.new(0, 120, 0, 36)
 openButton.Position = UDim2.new(0.5, -60, 0.02, 0)
 openButton.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
-openButton.Text = "FASTFREDBEAR HUB"
+openButton.Text = "⚡ Open Menu"
 openButton.TextColor3 = Color3.new(1, 1, 1)
-openButton.TextSize = 10
+openButton.TextSize = 14
 openButton.Font = Enum.Font.GothamBold
 openButton.Visible = false
 openButton.Parent = gui
@@ -90,16 +93,16 @@ openStroke.Color = Color3.fromRGB(0, 145, 255)
 openStroke.Thickness = 2
 openStroke.Parent = openButton
 
--- Input Box Design
+-- SECTION 1: WalkSpeed Input & Button
 local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(1, -30, 0, 38)
-speedBox.Position = UDim2.new(0, 15, 0, 55)
+speedBox.Size = UDim2.new(0.55, -15, 0, 35)
+speedBox.Position = UDim2.new(0, 15, 0, 60)
 speedBox.BackgroundColor3 = Color3.fromRGB(28, 45, 75)
 speedBox.TextColor3 = Color3.new(1, 1, 1)
-speedBox.PlaceholderText = "Enter speed"
+speedBox.PlaceholderText = "Speed"
 speedBox.PlaceholderColor3 = Color3.fromRGB(160, 180, 210)
 speedBox.Text = "16"
-speedBox.TextSize = 15
+speedBox.TextSize = 14
 speedBox.Font = Enum.Font.Gotham
 speedBox.ClearTextOnFocus = false
 speedBox.Parent = main
@@ -108,41 +111,73 @@ local boxCorner = Instance.new("UICorner")
 boxCorner.CornerRadius = UDim.new(0, 8)
 boxCorner.Parent = speedBox
 
--- Interface Action Buttons (Apply & Reset)
-local apply = Instance.new("TextButton")
-apply.Size = UDim2.new(0.55, -18, 0, 35)
-apply.Position = UDim2.new(0, 15, 0, 105)
-apply.BackgroundColor3 = Color3.fromRGB(0, 130, 255)
-apply.Text = "Apply Speed"
-apply.TextColor3 = Color3.new(1, 1, 1)
-apply.TextSize = 14
-apply.Font = Enum.Font.GothamBold
-apply.Parent = main
+local applySpeed = Instance.new("TextButton")
+applySpeed.Size = UDim2.new(0.45, -15, 0, 35)
+applySpeed.Position = UDim2.new(0.55, 0, 0, 60)
+applySpeed.BackgroundColor3 = Color3.fromRGB(0, 130, 255)
+applySpeed.Text = "Set Speed"
+applySpeed.TextColor3 = Color3.new(1, 1, 1)
+applySpeed.TextSize = 13
+applySpeed.Font = Enum.Font.GothamBold
+applySpeed.Parent = main
 
-local applyCorner = Instance.new("UICorner")
-applyCorner.CornerRadius = UDim.new(0, 8)
-applyCorner.Parent = apply
+local applySpeedCorner = Instance.new("UICorner")
+applySpeedCorner.CornerRadius = UDim.new(0, 8)
+applySpeedCorner.Parent = applySpeed
 
-local reset = Instance.new("TextButton")
-reset.Size = UDim2.new(0.45, -12, 0, 35)
-reset.Position = UDim2.new(0.55, 3, 0, 105)
-reset.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-reset.Text = "Reset"
-reset.TextColor3 = Color3.new(1, 1, 1)
-reset.TextSize = 14
-reset.Font = Enum.Font.GothamBold
-reset.Parent = main
+-- SECTION 2: JumpPower Input & Button (Placed right below WalkSpeed)
+local jumpBox = Instance.new("TextBox")
+jumpBox.Size = UDim2.new(0.55, -15, 0, 35)
+jumpBox.Position = UDim2.new(0, 15, 0, 105)
+jumpBox.BackgroundColor3 = Color3.fromRGB(28, 45, 75)
+jumpBox.TextColor3 = Color3.new(1, 1, 1)
+jumpBox.PlaceholderText = "Jump (Max 150)"
+jumpBox.PlaceholderColor3 = Color3.fromRGB(160, 180, 210)
+jumpBox.Text = "50"
+jumpBox.TextSize = 14
+jumpBox.Font = Enum.Font.Gotham
+jumpBox.ClearTextOnFocus = false
+jumpBox.Parent = main
 
-local resetCorner = Instance.new("UICorner")
-resetCorner.CornerRadius = UDim.new(0, 8)
-resetCorner.Parent = reset
+local jumpBoxCorner = Instance.new("UICorner")
+jumpBoxCorner.CornerRadius = UDim.new(0, 8)
+jumpBoxCorner.Parent = jumpBox
+
+local applyJump = Instance.new("TextButton")
+applyJump.Size = UDim2.new(0.45, -15, 0, 35)
+applyJump.Position = UDim2.new(0.55, 0, 0, 105)
+applyJump.BackgroundColor3 = Color3.fromRGB(0, 130, 255)
+applyJump.Text = "Set Jump"
+applyJump.TextColor3 = Color3.new(1, 1, 1)
+applyJump.TextSize = 13
+applyJump.Font = Enum.Font.GothamBold
+applyJump.Parent = main
+
+local applyJumpCorner = Instance.new("UICorner")
+applyJumpCorner.CornerRadius = UDim.new(0, 8)
+applyJumpCorner.Parent = applyJump
+
+-- Universal Reset Button
+local resetAll = Instance.new("TextButton")
+resetAll.Size = UDim2.new(1, -30, 0, 35)
+resetAll.Position = UDim2.new(0, 15, 0, 150)
+resetAll.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+resetAll.Text = "Reset All Stats"
+resetAll.TextColor3 = Color3.new(1, 1, 1)
+resetAll.TextSize = 14
+resetAll.Font = Enum.Font.GothamBold
+resetAll.Parent = main
+
+local resetAllCorner = Instance.new("UICorner")
+resetAllCorner.CornerRadius = UDim.new(0, 8)
+resetAllCorner.Parent = resetAll
 
 -- ESP Toggle Button
 local espToggle = Instance.new("TextButton")
 espToggle.Size = UDim2.new(1, -30, 0, 40)
-espToggle.Position = UDim2.new(0, 15, 0, 150)
-espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40) -- Starts Green
-espToggle.Text = "ESP: ON"
+espToggle.Position = UDim2.new(0, 15, 0, 195)
+espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40)
+espToggle.Text = "ESP OUTLINES: ON"
 espToggle.TextColor3 = Color3.new(1, 1, 1)
 espToggle.TextSize = 14
 espToggle.Font = Enum.Font.GothamBold
@@ -152,12 +187,27 @@ local espCorner = Instance.new("UICorner")
 espCorner.CornerRadius = UDim.new(0, 8)
 espCorner.Parent = espToggle
 
+-- Teleport to SafeZone Button
+local tpSafeZone = Instance.new("TextButton")
+tpSafeZone.Size = UDim2.new(1, -30, 0, 40)
+tpSafeZone.Position = UDim2.new(0, 15, 0, 245)
+tpSafeZone.BackgroundColor3 = Color3.fromRGB(140, 90, 0)
+tpSafeZone.Text = "🛡️ TELEPORT TO SAFEZONE"
+tpSafeZone.TextColor3 = Color3.new(1, 1, 1)
+tpSafeZone.TextSize = 13
+tpSafeZone.Font = Enum.Font.GothamBold
+tpSafeZone.Parent = main
+
+local tpCorner = Instance.new("UICorner")
+tpCorner.CornerRadius = UDim.new(0, 8)
+tpCorner.Parent = tpSafeZone
+
 -- Dynamic Status Indicator
 local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1, -20, 0, 20)
-status.Position = UDim2.new(0, 10, 0, 205)
+status.Size = UDim2.new(1, -20, 0, 40)
+status.Position = UDim2.new(0, 10, 0, 295)
 status.BackgroundTransparency = 1
-status.Text = "Current speed: 16 | Outlines Active"
+status.Text = "Speed: 16 | Jump: 50\nUI Connected Successfully"
 status.TextColor3 = Color3.fromRGB(130, 200, 255)
 status.TextSize = 12
 status.Font = Enum.Font.Gotham
@@ -165,23 +215,24 @@ status.Parent = main
 
 -- Runtime State Management Variables
 local selectedSpeed = DEFAULT_SPEED
+local selectedJump = DEFAULT_JUMP
 local espActive = true
-local trackingFolder = Workspace:FindFirstChild("Enemies")
 
-local function setSpeed(value)
+local function updateCharacterStats()
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        humanoid.WalkSpeed = value
-        status.Text = "Current speed: " .. value .. " | ESP: " .. (espActive and "ON" or "OFF")
+        humanoid.WalkSpeed = selectedSpeed
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = selectedJump
     end
 end
 
--- Core runtime enforcement loop (Prevents anti-cheat speed resets)
+-- Core runtime enforcement loop (Prevents anti-cheat resetting stats)
 task.spawn(function()
     while task.wait(0.1) do
         if gui and gui.Parent then
-            setSpeed(selectedSpeed)
+            updateCharacterStats()
         else
             break
         end
@@ -191,35 +242,32 @@ end)
 -- Core Outline Highlight Engine
 local function createHighlight(model, fill, outline)
     if not model:IsA("Model") or model == player.Character then return end
-    
     local highlight = model:FindFirstChild("DeltaOutlineESP")
     if not highlight then
         highlight = Instance.new("Highlight")
         highlight.Name = "DeltaOutlineESP"
         highlight.FillColor = fill
-        highlight.FillTransparency = 0.55 -- Semi-see-through inside body
+        highlight.FillTransparency = 0.55
         highlight.OutlineColor = outline
-        highlight.OutlineTransparency = 0 -- Full bright clean solid line
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- See through walls!
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         highlight.Parent = model
     end
-
-    -- Keep highlight visibility in sync with master toggle button state
     highlight.Enabled = espActive
 end
 
--- Clean out markers dynamically if toggled off
 local function cleanHighlights()
     for _, p in ipairs(Players:GetPlayers()) do
         if p.Character and p.Character:FindFirstChild("DeltaOutlineESP") then
             p.Character.DeltaOutlineESP.Enabled = false
         end
     end
-    if trackingFolder then
-        for _, enemy in ipairs(trackingFolder:GetChildren()) do
+    local enemiesFolder = Workspace:FindFirstChild("Enemies")
+    if enemiesFolder then
+        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
             if enemy:FindFirstChild("DeltaOutlineESP") then
-				enemy.DeltaOutlineESP.Enabled = false
-			end
+                enemy.DeltaOutlineESP.Enabled = false
+            end
         end
     end
 end
@@ -229,35 +277,17 @@ local function scanWorld()
         cleanHighlights()
         return 
     end
-
-    -- 1. Track Real Players (Bright Neon Cyan Outlines)
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
             createHighlight(p.Character, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255))
         end
     end
-    
-    -- 2. Track Custom Enemies folder from image context (Glow Neon Crimson Red Outlines)
-    if trackingFolder then
-        for _, enemy in ipairs(trackingFolder:GetChildren()) do
+    local enemiesFolder = Workspace:FindFirstChild("Enemies")
+    if enemiesFolder then
+        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
             createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30))
         end
     end
-end
-
--- Active listening hooks manage world updates continuously
-Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function(char)
-        task.wait(1)
-        if espActive then createHighlight(char, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255)) end
-    end)
-end)
-
-if trackingFolder then
-    trackingFolder.ChildAdded:Connect(function(enemy)
-        task.wait(0.5)
-        if espActive then createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30)) end
-    end)
 end
 
 task.spawn(function()
@@ -267,47 +297,75 @@ task.spawn(function()
     end
 end)
 
+-- Multi-Layer Smart Teleport Execution
+local function teleportToSafeZone()
+    local character = player.Character
+    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+local safeZonesFolder = Workspace:FindFirstChild("SafeZones")
+local targetObj = safeZonesFolder and safeZonesFolder:FindFirstChild("NPCBOUNDS") or Workspace:FindFirstChild("NPCBOUNDS", true)
+if targetObj and targetObj:IsA("BasePart") then
+rootPart.CFrame = targetObj.CFrame + Vector3.new(0, 5, 0)
+status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🎯 Teleported to Map Object!"
+else
+rootPart.CFrame = CFrame.new(BACKUP_SAFEZONE_POSITION) + Vector3.new(0, 5, 0)
+status.Text = "Speed: "..selectedSpeed.." | Jump: "..selectedJump.."\n🌐 Map Unloaded! Used Position Cords."
+end
+end
 -- UI Interaction Event Hooks
-apply.Activated:Connect(function()
-    local value = tonumber(speedBox.Text)
-    if not value or value ~= value or value == math.huge or value == -math.huge then
-        status.Text = "Enter a valid number!"
-        return
-    end
-    value = math.clamp(math.floor(value), 1, MAX_SPEED)
-    selectedSpeed = value
-    setSpeed(value)
+applySpeed.Activated:Connect(function()
+local speedVal = tonumber(speedBox.Text)
+if speedVal and speedVal == speedVal and speedVal ~= math.huge and speedVal ~= -math.huge then
+selectedSpeed = math.clamp(math.floor(speedVal), 1, MAX_SPEED)
+speedBox.Text = tostring(selectedSpeed)
+status.Text = "Speed: " .. selectedSpeed .. " | Jump: " .. selectedJump .. "\nWalkSpeed updated successfully!"
+else
+status.Text = "Enter a valid number for Speed!"
+end
+updateCharacterStats()
 end)
-
-reset.Activated:Connect(function()
-    selectedSpeed = DEFAULT_SPEED
-    speedBox.Text = tostring(DEFAULT_SPEED)
-    setSpeed(DEFAULT_SPEED)
+applyJump.Activated:Connect(function()
+local jumpVal = tonumber(jumpBox.Text)
+if jumpVal and jumpVal == jumpVal and jumpVal ~= math.huge and jumpVal ~= -math.huge then
+selectedJump = math.clamp(math.floor(jumpVal), 0, MAX_JUMP)
+jumpBox.Text = tostring(selectedJump)
+status.Text = "Speed: " .. selectedSpeed .. " | Jump: " .. selectedJump .. "\nJumpPower updated successfully!"
+else
+status.Text = "Enter a valid number for Jump!"
+end
+updateCharacterStats()
 end)
-
+resetAll.Activated:Connect(function()
+selectedSpeed = DEFAULT_SPEED
+selectedJump = DEFAULT_JUMP
+speedBox.Text = tostring(DEFAULT_SPEED)
+jumpBox.Text = tostring(DEFAULT_JUMP)
+updateCharacterStats()
+status.Text = "Speed: 16 | Jump: 50\nAll stats reset to defaults."
+end)
 espToggle.Activated:Connect(function()
-    espActive = not espActive
-    if espActive then
-        espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40)
-        espToggle.Text = "ESP OUTLINES: ON"
-        scanWorld()
-    else
-        espToggle.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
-        espToggle.Text = "ESP OUTLINES: OFF"
-        cleanHighlights()
-    end
-    setSpeed(selectedSpeed)
+espActive = not espActive
+if espActive then
+espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40)
+espToggle.Text = "ESP OUTLINES: ON"
+scanWorld()
+else
+espToggle.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
+espToggle.Text = "ESP OUTLINES: OFF"
+cleanHighlights()
+end
 end)
-
+tpSafeZone.Activated:Connect(function()
+teleportToSafeZone()
+end)
 closeButton.Activated:Connect(function()
-    main.Visible = false
-    openButton.Visible = true
+main.Visible = false
+openButton.Visible = true
 end)
-
 openButton.Activated:Connect(function()
-    main.Visible = true
-    openButton.Visible = false
+main.Visible = true
+openButton.Visible = false
 end)
-
 -- Run initial sweep immediately upon injection
 scanWorld()
