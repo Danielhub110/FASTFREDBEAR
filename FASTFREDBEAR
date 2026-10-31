@@ -1,0 +1,313 @@
+-- Delta Executor: Speed Control + Player/NPC Silhouette Outline ESP
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+
+local DEFAULT_SPEED = 16
+local MAX_SPEED = 10000
+
+-- Clean up older interface setups safely
+if CoreGui:FindFirstChild("DeltaSpeedGUI") then
+    CoreGui.DeltaSpeedGUI:Destroy()
+end
+
+-- Create ScreenGui inside CoreGui container
+local gui = Instance.new("ScreenGui")
+gui.Name = "DeltaSpeedGUI"
+gui.ResetOnSpawn = false
+
+local success, err = pcall(function() gui.Parent = CoreGui end)
+if not success then gui.Parent = player:WaitForChild("PlayerGui") end
+
+-- Main Window Configuration
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 280, 0, 240)
+main.Position = UDim2.new(0.5, -140, 0.5, -120)
+main.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+main.Visible = true
+main.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 14)
+corner.Parent = main
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(0, 145, 255)
+stroke.Thickness = 2
+stroke.Parent = main
+
+-- Title Header Banner
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
+title.BorderSizePixel = 0
+title.Text = "ESP AND WALKSPEED YAY"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = title
+
+-- Minimization Controls
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -38, 0, 7)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.TextSize = 16
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Parent = main
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeButton
+
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 120, 0, 36)
+openButton.Position = UDim2.new(0.5, -60, 0.02, 0)
+openButton.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
+openButton.Text = "⚡ Open Menu"
+openButton.TextColor3 = Color3.new(1, 1, 1)
+openButton.TextSize = 14
+openButton.Font = Enum.Font.GothamBold
+openButton.Visible = false
+openButton.Parent = gui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(0, 8)
+openCorner.Parent = openButton
+
+local openStroke = Instance.new("UIStroke")
+openStroke.Color = Color3.fromRGB(0, 145, 255)
+openStroke.Thickness = 2
+openStroke.Parent = openButton
+
+-- Input Box Design
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(1, -30, 0, 38)
+speedBox.Position = UDim2.new(0, 15, 0, 55)
+speedBox.BackgroundColor3 = Color3.fromRGB(28, 45, 75)
+speedBox.TextColor3 = Color3.new(1, 1, 1)
+speedBox.PlaceholderText = "Enter speed"
+speedBox.PlaceholderColor3 = Color3.fromRGB(160, 180, 210)
+speedBox.Text = "16"
+speedBox.TextSize = 15
+speedBox.Font = Enum.Font.Gotham
+speedBox.ClearTextOnFocus = false
+speedBox.Parent = main
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0, 8)
+boxCorner.Parent = speedBox
+
+-- Interface Action Buttons (Apply & Reset)
+local apply = Instance.new("TextButton")
+apply.Size = UDim2.new(0.55, -18, 0, 35)
+apply.Position = UDim2.new(0, 15, 0, 105)
+apply.BackgroundColor3 = Color3.fromRGB(0, 130, 255)
+apply.Text = "Apply Speed"
+apply.TextColor3 = Color3.new(1, 1, 1)
+apply.TextSize = 14
+apply.Font = Enum.Font.GothamBold
+apply.Parent = main
+
+local applyCorner = Instance.new("UICorner")
+applyCorner.CornerRadius = UDim.new(0, 8)
+applyCorner.Parent = apply
+
+local reset = Instance.new("TextButton")
+reset.Size = UDim2.new(0.45, -12, 0, 35)
+reset.Position = UDim2.new(0.55, 3, 0, 105)
+reset.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+reset.Text = "Reset"
+reset.TextColor3 = Color3.new(1, 1, 1)
+reset.TextSize = 14
+reset.Font = Enum.Font.GothamBold
+reset.Parent = main
+
+local resetCorner = Instance.new("UICorner")
+resetCorner.CornerRadius = UDim.new(0, 8)
+resetCorner.Parent = reset
+
+-- ESP Toggle Button
+local espToggle = Instance.new("TextButton")
+espToggle.Size = UDim2.new(1, -30, 0, 40)
+espToggle.Position = UDim2.new(0, 15, 0, 150)
+espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40) -- Starts Green
+espToggle.Text = "ESP OUTLINES: ON"
+espToggle.TextColor3 = Color3.new(1, 1, 1)
+espToggle.TextSize = 14
+espToggle.Font = Enum.Font.GothamBold
+espToggle.Parent = main
+
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 8)
+espCorner.Parent = espToggle
+
+-- Dynamic Status Indicator
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, -20, 0, 20)
+status.Position = UDim2.new(0, 10, 0, 205)
+status.BackgroundTransparency = 1
+status.Text = "Current speed: 16 | Outlines Active"
+status.TextColor3 = Color3.fromRGB(130, 200, 255)
+status.TextSize = 12
+status.Font = Enum.Font.Gotham
+status.Parent = main
+
+-- Runtime State Management Variables
+local selectedSpeed = DEFAULT_SPEED
+local espActive = true
+local trackingFolder = Workspace:FindFirstChild("Enemies")
+
+local function setSpeed(value)
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = value
+        status.Text = "Current speed: " .. value .. " | ESP: " .. (espActive and "ON" or "OFF")
+    end
+end
+
+-- Core runtime enforcement loop (Prevents anti-cheat speed resets)
+task.spawn(function()
+    while task.wait(0.1) do
+        if gui and gui.Parent then
+            setSpeed(selectedSpeed)
+        else
+            break
+        end
+    end
+end)
+
+-- Core Outline Highlight Engine
+local function createHighlight(model, fill, outline)
+    if not model:IsA("Model") or model == player.Character then return end
+    
+    local highlight = model:FindFirstChild("DeltaOutlineESP")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "DeltaOutlineESP"
+        highlight.FillColor = fill
+        highlight.FillTransparency = 0.55 -- Semi-see-through inside body
+        highlight.OutlineColor = outline
+        highlight.OutlineTransparency = 0 -- Full bright clean solid line
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- See through walls!
+        highlight.Parent = model
+    end
+
+    -- Keep highlight visibility in sync with master toggle button state
+    highlight.Enabled = espActive
+end
+
+-- Clean out markers dynamically if toggled off
+local function cleanHighlights()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p.Character and p.Character:FindFirstChild("DeltaOutlineESP") then
+            p.Character.DeltaOutlineESP.Enabled = false
+        end
+    end
+    if trackingFolder then
+        for _, enemy in ipairs(trackingFolder:GetChildren()) do
+            if enemy:FindFirstChild("DeltaOutlineESP") then
+				enemy.DeltaOutlineESP.Enabled = false
+			end
+        end
+    end
+end
+
+local function scanWorld()
+    if not espActive then 
+        cleanHighlights()
+        return 
+    end
+
+    -- 1. Track Real Players (Bright Neon Cyan Outlines)
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            createHighlight(p.Character, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255))
+        end
+    end
+    
+    -- 2. Track Custom Enemies folder from image context (Glow Neon Crimson Red Outlines)
+    if trackingFolder then
+        for _, enemy in ipairs(trackingFolder:GetChildren()) do
+            createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30))
+        end
+    end
+end
+
+-- Active listening hooks manage world updates continuously
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function(char)
+        task.wait(1)
+        if espActive then createHighlight(char, Color3.fromRGB(0, 150, 255), Color3.fromRGB(0, 230, 255)) end
+    end)
+end)
+
+if trackingFolder then
+    trackingFolder.ChildAdded:Connect(function(enemy)
+        task.wait(0.5)
+        if espActive then createHighlight(enemy, Color3.fromRGB(180, 0, 0), Color3.fromRGB(255, 30, 30)) end
+    end)
+end
+
+task.spawn(function()
+    while task.wait(1.5) do
+        if not gui or not gui.Parent then break end
+        scanWorld()
+    end
+end)
+
+-- UI Interaction Event Hooks
+apply.Activated:Connect(function()
+    local value = tonumber(speedBox.Text)
+    if not value or value ~= value or value == math.huge or value == -math.huge then
+        status.Text = "Enter a valid number!"
+        return
+    end
+    value = math.clamp(math.floor(value), 1, MAX_SPEED)
+    selectedSpeed = value
+    setSpeed(value)
+end)
+
+reset.Activated:Connect(function()
+    selectedSpeed = DEFAULT_SPEED
+    speedBox.Text = tostring(DEFAULT_SPEED)
+    setSpeed(DEFAULT_SPEED)
+end)
+
+espToggle.Activated:Connect(function()
+    espActive = not espActive
+    if espActive then
+        espToggle.BackgroundColor3 = Color3.fromRGB(20, 80, 40)
+        espToggle.Text = "ESP OUTLINES: ON"
+        scanWorld()
+    else
+        espToggle.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
+        espToggle.Text = "ESP OUTLINES: OFF"
+        cleanHighlights()
+    end
+    setSpeed(selectedSpeed)
+end)
+
+closeButton.Activated:Connect(function()
+    main.Visible = false
+    openButton.Visible = true
+end)
+
+openButton.Activated:Connect(function()
+    main.Visible = true
+    openButton.Visible = false
+end)
+
+-- Run initial sweep immediately upon injection
+scanWorld()
